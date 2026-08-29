@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: astro
+    description: Astrology operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /astro/intro:
+    get:
+      operationId: getAstroIntro
+      tags: [astro]
+      summary: Astrology introduction state
+      description: >-
+        Returns the current Astro integration state for the launcher. Until user authentication
+        and profile persistence are wired, this endpoint does not accept or persist birth data.
+      responses:
+        "200":
+          description: Astro introduction state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AstroIntroResponse"
+  /astro/basic:
+    post:
+      operationId: getBasicAstroReading
+      tags: [astro]
+      summary: Get a basic daily zodiac reading
+      description: >-
+        Derives a Western sun sign from the supplied birth date and retrieves today's daily
+        sun-sign prediction through the server-side AstrologyAPI integration. Birth data is not
+        persisted by this endpoint. Current-location edge metadata may be used only to determine
+        the user's local timezone/day and is never treated as birthplace.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AstroBasicRequest"
+      responses:
+        "200":
+          description: Basic daily zodiac reading
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AstroBasicResponse"
+        "400":
+          description: Invalid birth date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Astrology service is unavailable or not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +85,115 @@ components:
           type: string
       required:
         - status
-
+    AstroIntroResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        requiresBirthday:
+          type: boolean
+        personalizationLocked:
+          type: boolean
+        personalizationUnlockMethod:
+          type: string
+          enum: [rewarded_ad]
+        message:
+          type: string
+      required:
+        - enabled
+        - requiresBirthday
+        - personalizationLocked
+        - personalizationUnlockMethod
+        - message
+    AstroBasicRequest:
+      type: object
+      properties:
+        dateOfBirth:
+          type: string
+          format: date
+          description: Gregorian birth date in YYYY-MM-DD format.
+      required:
+        - dateOfBirth
+    AstroDailySections:
+      type: object
+      properties:
+        personalLife:
+          type: string
+        profession:
+          type: string
+        health:
+          type: string
+        emotions:
+          type: string
+        travel:
+          type: string
+        luck:
+          type: string
+      required:
+        - personalLife
+        - profession
+        - health
+        - emotions
+        - travel
+        - luck
+    AstroEdgeContext:
+      type: object
+      properties:
+        city:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+        timezone:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+      additionalProperties: false
+    AstroBasicResponse:
+      type: object
+      properties:
+        sign:
+          type: string
+          enum:
+            - aries
+            - taurus
+            - gemini
+            - cancer
+            - leo
+            - virgo
+            - libra
+            - scorpio
+            - sagittarius
+            - capricorn
+            - aquarius
+            - pisces
+        greeting:
+          type: string
+        dailyMessage:
+          type: string
+        sections:
+          $ref: "#/components/schemas/AstroDailySections"
+        edgeContext:
+          $ref: "#/components/schemas/AstroEdgeContext"
+        source:
+          type: string
+          enum: [astrologyapi]
+      required:
+        - sign
+        - greeting
+        - dailyMessage
+        - sections
+        - source
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
