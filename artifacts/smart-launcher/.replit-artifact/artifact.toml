@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/smart-launcher/"
+title = "Smart Launcher"
+description = "A customizable Android launcher experience that brings essential tools, wellness tracking, weather, news, and entertainment into one calm home screen."
+version = "1.0.0"
+id = "artifacts/smart-launcher"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/smart-launcher/" ]
+localPort = 26178
+
+[services.development]
+run = "pnpm --filter @workspace/smart-launcher run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-launcher", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/smart-launcher", "run", "serve" ]
+
+[services.env]
+PORT = "26178"
+BASE_PATH = "/smart-launcher/"
